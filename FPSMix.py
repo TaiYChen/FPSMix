@@ -14,7 +14,7 @@ def farthest_point_sample(xyz, npoint):
     centroids = torch.zeros(B, npoint, dtype=torch.long).cuda()   # [B, npoint]
     distance = torch.ones(B, N).cuda() * 1e10                     # [B,N] 1e10
     farthest = torch.randint(0, N, (B,), dtype=torch.long).cuda() # [B,] random init first center's index
-    batch_indices = torch.arange(B, dtype=torch.long).cuda()      # [B,] ~ [0,1,¡­¡­,B-1]
+    batch_indices = torch.arange(B, dtype=torch.long).cuda()      # [B,] ~ [0,1,Â¡Â­Â¡Â­,B-1]
     for i in range(npoint):
         centroids[:, i] = farthest                                # i=0 centroids[:,0] = init, i>0, farthest
         centroid = xyz[batch_indices, farthest, :].view(B, 1, 3)  # 
@@ -77,3 +77,24 @@ class FPSMix(object):
             pc2 = pc
             
         return pc, target, target_b, lam , pc1, pc2  
+
+class FPSMixnorm(object):
+    def __init__(self):
+        pass
+
+    def __call__(self, pc, norm, mg):
+        bsize, Npoint, dim = pc.size()
+        rand_index = torch.randperm(bsize).cuda()
+        
+        if np.random.uniform() < mg:
+            norm_b = norm[rand_index]
+            pc = torch.cat((pc, pc[rand_index]), dim=1)
+            
+            idx = farthest_point_sample(pc[:,:,:3], norm.shape[1])
+            pc = index_points(pc, idx)
+            norm = torch.cat((norm, norm_b), dim=1)
+            norm = index_points(norm.unsqueeze(2), idx)
+            norm = norm.squeeze()
+
+            
+        return pc, norm 
