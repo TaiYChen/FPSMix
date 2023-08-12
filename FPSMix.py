@@ -78,7 +78,7 @@ class FPSMix(object):
             
         return pc, target, target_b, lam , pc1, pc2  
 
-class FPSMixnorm(object):
+class FPSMix_norml(object):
     def __init__(self):
         pass
 
